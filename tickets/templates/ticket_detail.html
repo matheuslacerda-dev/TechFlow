@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Ticket #{{ ticket.pk }} | TechFlow{% endblock %}
+
+{% block content %}
+<section class="lb-panel p-5 sm:p-6">
+    <div class="flex flex-col gap-4 lg:flex-row lg:justify-between">
+        <div>
+            <p class="lb-system">[ticket-id] #{{ ticket.pk }}</p>
+            <h1 class="mt-2 text-2xl font-semibold sm:text-3xl">{{ ticket.title }}</h1>
+            <p class="mt-3 max-w-3xl whitespace-pre-line text-sm">{{ ticket.description }}</p>
+        </div>
+        <div class="grid w-full gap-2 sm:max-w-xs">
+            <div class="lb-panel px-3 py-2">
+                <p class="lb-system">Priority</p>
+                <p class="mt-1 text-sm">{{ ticket.get_priority_display }}</p>
+            </div>
+            <div class="lb-panel px-3 py-2">
+                <p class="lb-system">Status</p>
+                <p class="mt-1 text-sm">{{ ticket.get_status_display }}</p>
+            </div>
+            <div class="lb-panel px-3 py-2">
+                <p class="lb-system">Requester</p>
+                <p class="mt-1 text-sm">{{ ticket.who_opened.user.username }}</p>
+            </div>
+            <div class="lb-panel px-3 py-2">
+                <p class="lb-system">Created At</p>
+                <p class="mt-1 text-sm">{{ ticket.created_at|date:"d M Y H:i" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-5 flex flex-wrap gap-2">
+        <a href="{% url 'ticket-list' %}" class="lb-btn">[>] Back</a>
+        <a href="{% url 'ticket-update' ticket.pk %}" class="lb-btn">[=] Edit Ticket</a>
+    </div>
+</section>
+
+<section class="lb-panel mt-4 p-5 sm:p-6">
+    <h2 class="text-xl font-semibold">Resolution History</h2>
+    <div class="mt-4 space-y-3">
+        {% for resolution in resolutions %}
+            <article class="lb-panel p-4">
+                <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <p class="lb-system">Technician: {{ resolution.technician.user.username }}</p>
+                    <p class="lb-system">Time Spent: {{ resolution.spent_time }}</p>
+                </div>
+                <p class="whitespace-pre-line text-sm">{{ resolution.comment }}</p>
+            </article>
+        {% empty %}
+            <p class="lb-system">[empty] no resolution entries</p>
+        {% endfor %}
+    </div>
+</section>
+
+{% if is_technician and resolution_form %}
+<section class="lb-panel mt-4 p-5 sm:p-6">
+    <h2 class="text-xl font-semibold">Close Ticket with Resolution</h2>
+    <p class="lb-copy mt-1 text-sm">Submit technical notes and total spent time to mark this ticket as resolved.</p>
+
+    <form method="post" class="mt-5 space-y-5">
+        {% csrf_token %}
+
+        <div>
+            <label for="{{ resolution_form.comment.id_for_label }}" class="lb-system mb-1 block">[field] resolution_notes</label>
+            {{ resolution_form.comment }}
+            {% for error in resolution_form.comment.errors %}
+                <p class="lb-error-action mt-1">[field-error] {{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div>
+            <label for="{{ resolution_form.spent_time.id_for_label }}" class="lb-system mb-1 block">[field] spent_time</label>
+            {{ resolution_form.spent_time }}
+            {% for error in resolution_form.spent_time.errors %}
+                <p class="lb-error-action mt-1">[field-error] {{ error }}</p>
+            {% endfor %}
+        </div>
+
+        {% if resolution_form.non_field_errors %}
+            <div class="lb-error">
+                <p class="lb-error-code">[tf-res-001]</p>
+                <p class="lb-error-title">Resolution submission failed</p>
+                <p class="lb-error-desc">Validation or domain constraints blocked the operation.</p>
+                {% for error in resolution_form.non_field_errors %}
+                    <p class="lb-error-action mt-2">[action] {{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <button type="submit" class="lb-btn lb-btn-amber">[x] Submit Resolution</button>
+    </form>
+</section>
+{% endif %}
+{% endblock %}

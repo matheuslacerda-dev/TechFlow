@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Register | TechFlow{% endblock %}
+
+{% block content %}
+<section class="lb-panel mx-auto max-w-xl p-5 sm:p-6">
+    <p class="lb-system">[auth] register</p>
+    <h1 class="mt-2 text-2xl font-semibold">Create User Account</h1>
+    <p class="lb-copy mt-2 text-sm">After registration, you will be redirected to create your employee profile.</p>
+
+    <form method="post" class="mt-5 space-y-4">
+        {% csrf_token %}
+
+        {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="lb-system mb-1 block">[field] {{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <p class="lb-copy mt-1 text-xs">{{ field.help_text }}</p>
+                {% endif %}
+                {% for error in field.errors %}
+                    <p class="lb-error-action mt-1">[field-error] {{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        {% if form.non_field_errors %}
+            <div class="lb-error">
+                <p class="lb-error-code">[tf-auth-400]</p>
+                <p class="lb-error-title">Registration failed</p>
+                <p class="lb-error-desc">Validation rules blocked account creation.</p>
+                {% for error in form.non_field_errors %}
+                    <p class="lb-error-action mt-2">[action] {{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <button type="submit" class="lb-btn lb-btn-amber w-full">[+] Register</button>
+        <a href="{% url 'login' %}" class="lb-btn w-full">[>] Login Instead</a>
+    </form>
+</section>
+{% endblock %}

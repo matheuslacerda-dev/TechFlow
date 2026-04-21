@@ -1,0 +1,64 @@
+<section class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+    <article class="lb-panel p-3">
+        <p class="lb-system">[total]</p>
+        <p class="mt-1 text-2xl font-semibold">{{ stats.total }}</p>
+    </article>
+    <article class="lb-panel p-3">
+        <p class="lb-system">[open]</p>
+        <p class="mt-1 text-2xl font-semibold">{{ stats.open }}</p>
+    </article>
+    <article class="lb-panel p-3">
+        <p class="lb-system">[in-progress]</p>
+        <p class="mt-1 text-2xl font-semibold">{{ stats.in_progress }}</p>
+    </article>
+    <article class="lb-panel p-3">
+        <p class="lb-system">[resolved]</p>
+        <p class="mt-1 text-2xl font-semibold">{{ stats.closed }}</p>
+    </article>
+</section>
+
+<section class="lb-panel mt-4 overflow-hidden">
+    <div class="hidden lb-row px-4 py-3 md:grid md:grid-cols-12">
+        <span class="lb-system col-span-4">Ticket</span>
+        <span class="lb-system col-span-2">Priority</span>
+        <span class="lb-system col-span-2">Status</span>
+        <span class="lb-system col-span-2">Requester</span>
+        <span class="lb-system col-span-2 text-right">Created</span>
+    </div>
+
+    {% for ticket in tickets %}
+        <a href="{% url 'ticket-detail' ticket.pk %}" class="lb-row group block px-4 py-4 last:border-b-0">
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
+                <div class="md:col-span-4">
+                    <p class="text-base font-semibold">{{ ticket.title }}</p>
+                    <p class="lb-copy mt-1 text-sm">{{ ticket.description|truncatechars:120 }}</p>
+                </div>
+                <div class="md:col-span-2">
+                    <span class="lb-chip {% if ticket.priority == 'high' %}lb-chip-error{% elif ticket.priority == 'medium' %}lb-chip-muted{% else %}lb-chip{% endif %}">
+                        {{ ticket.get_priority_display }}
+                    </span>
+                </div>
+                <div class="md:col-span-2">
+                    <span class="lb-chip {% if ticket.status == 'closed' %}lb-chip-ink{% elif ticket.status == 'in_progress' %}lb-chip-muted{% else %}lb-chip{% endif %}">
+                        {{ ticket.get_status_display }}
+                    </span>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="lb-system">{{ ticket.who_opened.user.username }}</p>
+                    <p class="lb-muted mt-1 text-xs">{{ ticket.who_opened.department.name }}</p>
+                </div>
+                <div class="md:col-span-2 md:text-right">
+                    <p class="lb-system">{{ ticket.created_at|date:"d M Y" }}</p>
+                    <p class="lb-muted mt-1 text-xs">{{ ticket.created_at|time:"H:i" }}</p>
+                </div>
+            </div>
+        </a>
+    {% empty %}
+        <div class="p-6">
+            <p class="lb-system">[empty-state]</p>
+            <p class="mt-2 text-sm">No tickets found for the current filter set.</p>
+            <p class="lb-copy mt-1 text-sm">Adjust the query or create a new ticket.</p>
+            <a href="{% url 'ticket-create' %}" class="lb-btn mt-4">[+] Create Ticket</a>
+        </div>
+    {% endfor %}
+</section>

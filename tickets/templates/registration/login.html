@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Login | TechFlow{% endblock %}
+
+{% block content %}
+<section class="lb-panel mx-auto max-w-md p-5 sm:p-6">
+    <p class="lb-system">[auth] login</p>
+    <h1 class="mt-2 text-2xl font-semibold">Access TechFlow</h1>
+    <p class="lb-copy mt-2 text-sm">Authenticate to continue to the ticket control plane.</p>
+
+    <form method="post" class="mt-5 space-y-4">
+        {% csrf_token %}
+
+        <div>
+            <label for="id_username" class="lb-system mb-1 block">[field] username</label>
+            <input id="id_username" name="username" type="text" required class="lb-input">
+        </div>
+
+        <div>
+            <label for="id_password" class="lb-system mb-1 block">[field] password</label>
+            <input id="id_password" name="password" type="password" required class="lb-input">
+        </div>
+
+        {% if form.errors %}
+            <div class="lb-error">
+                <p class="lb-error-code">[tf-auth-401]</p>
+                <p class="lb-error-title">Authentication failed</p>
+                <p class="lb-error-desc">Credentials are invalid or expired.</p>
+                <p class="lb-error-action mt-2">[action] Re-enter username and password.</p>
+            </div>
+        {% endif %}
+
+        <button type="submit" class="lb-btn lb-btn-amber w-full">[>] Login</button>
+        <a href="{% url 'register' %}" class="lb-btn w-full">[+] Create Account</a>
+    </form>
+</section>
+{% endblock %}
