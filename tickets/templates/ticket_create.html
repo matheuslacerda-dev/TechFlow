@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Create Ticket | TechFlow{% endblock %}
+
+{% block content %}
+<section class="lb-panel mx-auto max-w-3xl p-5 sm:p-6">
+    <p class="lb-system">[flow] ticket.create</p>
+    <h1 class="mt-2 text-2xl font-semibold sm:text-3xl">Open Technical Ticket</h1>
+    <p class="lb-copy mt-2 text-sm">Report the issue with objective context so triage and resolution can start immediately.</p>
+
+    <form method="post" class="mt-5 space-y-5">
+        {% csrf_token %}
+
+        <div>
+            <label for="{{ form.title.id_for_label }}" class="lb-system mb-1 block">[field] title</label>
+            {{ form.title }}
+            {% for error in form.title.errors %}
+                <p class="lb-error-action mt-1">[field-error] {{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div>
+            <label for="{{ form.description.id_for_label }}" class="lb-system mb-1 block">[field] description</label>
+            {{ form.description }}
+            {% for error in form.description.errors %}
+                <p class="lb-error-action mt-1">[field-error] {{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <fieldset>
+            <legend class="lb-system mb-2 block">[field] priority</legend>
+            <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {% for radio in form.priority %}
+                    <label class="lb-btn justify-start gap-2">
+                        {{ radio.tag }}
+                        <span>{{ radio.choice_label }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+            {% for error in form.priority.errors %}
+                <p class="lb-error-action mt-1">[field-error] {{ error }}</p>
+            {% endfor %}
+        </fieldset>
+
+        {% if form.non_field_errors %}
+            <div class="lb-error">
+                <p class="lb-error-code">[tf-val-001]</p>
+                <p class="lb-error-title">Validation failed</p>
+                <p class="lb-error-desc">One or more values are invalid. Review the fields below.</p>
+                {% for error in form.non_field_errors %}
+                    <p class="lb-error-action mt-2">[action] {{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="flex flex-wrap gap-2">
+            <button type="submit" class="lb-btn lb-btn-amber">[x] Submit Ticket</button>
+            <a href="{% url 'ticket-list' %}" class="lb-btn">[x] Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Update Ticket | TechFlow{% endblock %}
+
+{% block content %}
+<section class="lb-panel mx-auto max-w-3xl p-5 sm:p-6">
+    <p class="lb-system">[flow] ticket.update</p>
+    <h1 class="mt-2 text-2xl font-semibold sm:text-3xl">Update Ticket</h1>
+    <p class="lb-copy mt-2 text-sm">Edit title, details, or priority to keep routing accurate.</p>
+
+    <form method="post" class="mt-5 space-y-5">
+        {% csrf_token %}
+
+        <div>
+            <label for="{{ form.title.id_for_label }}" class="lb-system mb-1 block">[field] title</label>
+            {{ form.title }}
+            {% for error in form.title.errors %}
+                <p class="lb-error-action mt-1">[field-error] {{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div>
+            <label for="{{ form.description.id_for_label }}" class="lb-system mb-1 block">[field] description</label>
+            {{ form.description }}
+            {% for error in form.description.errors %}
+                <p class="lb-error-action mt-1">[field-error] {{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <fieldset>
+            <legend class="lb-system mb-2 block">[field] priority</legend>
+            <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {% for radio in form.priority %}
+                    <label class="lb-btn justify-start gap-2">
+                        {{ radio.tag }}
+                        <span>{{ radio.choice_label }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+            {% for error in form.priority.errors %}
+                <p class="lb-error-action mt-1">[field-error] {{ error }}</p>
+            {% endfor %}
+        </fieldset>
+
+        <div class="flex flex-wrap gap-2">
+            <button type="submit" class="lb-btn lb-btn-amber">[+] Save Changes</button>
+            <a href="{% url 'ticket-detail' object.pk %}" class="lb-btn">[x] Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

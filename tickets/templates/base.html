@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}TechFlow{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        :root {
+            --color-infinity: #E3E3E3;
+            --color-surface: #CCCCCC;
+            --color-text: #4D4D4D;
+            --color-ink: #0A0A0A;
+            --color-accent: #B35900;
+            --color-error: #BE123C;
+
+            --theme-bg: var(--color-infinity);
+            --theme-panel: var(--color-surface);
+            --theme-border: var(--color-surface);
+            --theme-copy: var(--color-text);
+            --theme-title: var(--color-ink);
+        }
+
+        * {
+            border-radius: 0 !important;
+            transition: none !important;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+            background: var(--theme-bg);
+            color: var(--theme-title);
+            font-family: "Inter", sans-serif;
+            line-height: 1.5;
+        }
+
+        a,
+        button,
+        input,
+        select,
+        textarea {
+            min-height: 44px;
+        }
+
+        .lb-system {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .lb-panel {
+            border: 2px solid var(--theme-border);
+            background: var(--theme-panel);
+        }
+
+        .lb-panel .lb-panel {
+            background: var(--color-infinity);
+        }
+
+        .lb-divider {
+            border-top: 2px solid var(--theme-border);
+        }
+
+        .lb-row {
+            border-bottom: 2px solid var(--color-surface);
+        }
+
+        .lb-row:hover {
+            background: rgba(10, 10, 10, 0.06);
+        }
+
+        .lb-copy {
+            color: var(--theme-copy);
+        }
+
+        .lb-muted {
+            color: var(--theme-copy);
+        }
+
+        .lb-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--color-ink);
+            background: var(--color-infinity);
+            min-height: 44px;
+            padding: 0.45rem 0.85rem;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--color-ink);
+            text-decoration: none;
+        }
+
+        .lb-btn:hover {
+            background: var(--color-surface);
+        }
+
+        .lb-btn-amber {
+            background: var(--color-accent);
+            border-color: var(--color-accent);
+            color: var(--color-infinity);
+            font-weight: 700;
+        }
+
+        .lb-btn-amber:hover {
+            filter: brightness(0.96);
+        }
+
+        .lb-btn-danger {
+            background: var(--color-error);
+            border-color: var(--color-error);
+            color: var(--color-infinity);
+            font-weight: 700;
+        }
+
+        .lb-input,
+        .lb-select,
+        .lb-textarea {
+            width: 100%;
+            border: 2px solid var(--color-ink);
+            background: var(--color-infinity);
+            color: var(--color-ink);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            padding: 0.6rem 0.75rem;
+        }
+
+        .lb-textarea {
+            min-height: 132px;
+            resize: vertical;
+        }
+
+        .lb-input:focus,
+        .lb-select:focus,
+        .lb-textarea:focus {
+            outline: none;
+            border-color: var(--color-ink);
+            box-shadow: inset 0 0 0 1px var(--color-ink);
+        }
+
+        .lb-kbd {
+            border: 2px solid var(--color-surface);
+            background: var(--color-infinity);
+            padding: 0.2rem 0.35rem;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .lb-chip {
+            display: inline-flex;
+            border: 2px solid var(--color-surface);
+            background: var(--color-infinity);
+            color: var(--color-ink);
+            padding: 0.2rem 0.45rem;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .lb-chip-muted {
+            border-color: var(--color-text);
+            background: var(--color-text);
+            color: var(--color-infinity);
+        }
+
+        .lb-chip-ink {
+            border-color: var(--color-ink);
+            background: var(--color-ink);
+            color: var(--color-infinity);
+        }
+
+        .lb-chip-error {
+            border-color: var(--color-error);
+            background: var(--color-error);
+            color: var(--color-infinity);
+        }
+
+        .lb-error {
+            border: 2px solid var(--color-error);
+            background: var(--color-infinity);
+            padding: 0.8rem;
+        }
+
+        .lb-error-code,
+        .lb-error-action {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--color-error);
+        }
+
+        .lb-error-title {
+            margin-top: 0.3rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--theme-title);
+        }
+
+        .lb-error-desc {
+            margin-top: 0.25rem;
+            font-size: 0.85rem;
+            color: var(--theme-copy);
+        }
+    </style>
+</head>
+<body>
+    <div x-data="{ open: false }" class="mx-auto max-w-6xl px-4 py-5 sm:px-6">
+        <header class="lb-panel">
+            <div class="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+                <a href="{% url 'ticket-list' %}" class="inline-flex flex-col">
+                    <span class="lb-system">TechFlow // Core</span>
+                    <span class="text-sm font-semibold">Enterprise Ticket Control Plane</span>
+                </a>
+
+                <button @click="open = !open" class="lb-btn sm:hidden">[=] Menu</button>
+
+                <nav class="hidden items-center gap-2 sm:flex">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'ticket-list' %}" class="lb-btn">[>] All Tickets</a>
+                        <a href="{% url 'my-tickets' %}" class="lb-btn">[>] My Tickets</a>
+                        <a href="{% url 'department-create' %}" class="lb-btn">[+] Department</a>
+                        <a href="{% url 'employee-update' %}" class="lb-btn">[=] Profile</a>
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="lb-btn">[x] Logout</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="lb-btn">[>] Login</a>
+                        <a href="{% url 'register' %}" class="lb-btn">[+] Register</a>
+                    {% endif %}
+                </nav>
+            </div>
+
+            <nav x-cloak x-show="open" class="lb-divider space-y-2 px-4 py-3 sm:hidden">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'ticket-list' %}" class="lb-btn w-full">[>] All Tickets</a>
+                    <a href="{% url 'my-tickets' %}" class="lb-btn w-full">[>] My Tickets</a>
+                    <a href="{% url 'department-create' %}" class="lb-btn w-full">[+] Department</a>
+                    <a href="{% url 'employee-update' %}" class="lb-btn w-full">[=] Profile</a>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="lb-btn w-full">[x] Logout</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="lb-btn w-full">[>] Login</a>
+                    <a href="{% url 'register' %}" class="lb-btn w-full">[+] Register</a>
+                {% endif %}
+            </nav>
+        </header>
+
+        {% if messages %}
+            <section class="mt-4 space-y-3">
+                {% for message in messages %}
+                    <div class="lb-panel px-4 py-3">
+                        <p class="lb-system">[sys-msg]</p>
+                        <p class="text-sm">{{ message }}</p>
+                    </div>
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        <main class="mt-5">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

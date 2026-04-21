@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}{{ list_title }} | TechFlow{% endblock %}
+
+{% block content %}
+<section class="lb-panel p-4 sm:p-5">
+    <p class="lb-system">[view] {{ list_title }}</p>
+    <h1 class="mt-2 text-2xl font-semibold sm:text-3xl">{{ list_title }}</h1>
+    <p class="lb-copy mt-2 max-w-3xl text-sm">{{ list_subtitle }}</p>
+    <div class="mt-4 flex flex-wrap gap-2">
+        <a href="{% url 'ticket-create' %}" class="lb-btn lb-btn-amber">[x] Create Ticket</a>
+        <a href="{% url 'department-create' %}" class="lb-btn">[+] Department</a>
+        <a href="{% url 'employee-update' %}" class="lb-btn">[=] Profile</a>
+    </div>
+</section>
+
+<section class="lb-panel mt-4 p-4">
+    <form
+        hx-get="{{ filter_url }}"
+        hx-target="#ticket-panel"
+        hx-push-url="true"
+        hx-trigger="keyup changed delay:300ms from:input, change from:select"
+        class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
+    >
+        <label class="block">
+            <span class="lb-system">[q] Search</span>
+            <input type="search" name="q" value="{{ filters.q }}" placeholder="title description requester" class="lb-input mt-1">
+        </label>
+
+        <label class="block">
+            <span class="lb-system">[s] Status</span>
+            <select name="status" class="lb-select mt-1">
+            <option value="">All Statuses</option>
+            <option value="open" {% if filters.status == "open" %}selected{% endif %}>Open</option>
+            <option value="in_progress" {% if filters.status == "in_progress" %}selected{% endif %}>In Progress</option>
+            <option value="closed" {% if filters.status == "closed" %}selected{% endif %}>Resolved</option>
+            </select>
+        </label>
+
+        <label class="block">
+            <span class="lb-system">[p] Priority</span>
+            <select name="priority" class="lb-select mt-1">
+            <option value="">All Priorities</option>
+            <option value="high" {% if filters.priority == "high" %}selected{% endif %}>High</option>
+            <option value="medium" {% if filters.priority == "medium" %}selected{% endif %}>Medium</option>
+            <option value="low" {% if filters.priority == "low" %}selected{% endif %}>Low</option>
+            </select>
+        </label>
+
+        <div class="flex items-end">
+            <a href="{{ filter_url }}" class="lb-btn w-full">[x] Reset Filters</a>
+        </div>
+    </form>
+    <p class="lb-muted mt-3 text-xs">
+        <span class="lb-kbd">[tip]</span> Type to filter instantly.
+    </p>
+</section>
+
+<div id="ticket-panel" class="mt-4">
+    {% include "partials/ticket_list_content.html" %}
+</div>
+{% endblock %}

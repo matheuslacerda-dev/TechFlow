@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Create Department | TechFlow{% endblock %}
+
+{% block content %}
+<section class="lb-panel mx-auto max-w-3xl p-5 sm:p-6">
+    <p class="lb-system">[flow] department.create</p>
+    <h1 class="mt-2 text-2xl font-semibold sm:text-3xl">Create Department</h1>
+    <p class="lb-copy mt-2 text-sm">Register a department to structure ownership, users, and support lanes.</p>
+
+    <form method="post" class="mt-5 space-y-5">
+        {% csrf_token %}
+
+        {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="lb-system mb-1 block">[field] {{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}
+                    <p class="lb-error-action mt-1">[field-error] {{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        <div class="flex flex-wrap gap-2">
+            <button type="submit" class="lb-btn lb-btn-amber">[+] Create Department</button>
+            <a href="{% url 'ticket-list' %}" class="lb-btn">[>] Back</a>
+        </div>
+    </form>
+</section>
+{% endblock %}
