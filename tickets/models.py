@@ -5,7 +5,17 @@ from django.db import models
 
 
 class User(AbstractUser):
-    pass
+    @property
+    def has_employee_profile(self):
+        return hasattr(self, "employee")
+
+    @property
+    def is_technician(self):
+        return self.has_employee_profile and self.employee.is_technician
+
+    @property
+    def can_manage_departments(self):
+        return self.is_superuser or self.is_staff or self.is_technician
 
 
 class Department(models.Model):
@@ -20,10 +30,22 @@ class Department(models.Model):
 
 
 class Employee(models.Model):
+    class Position(models.TextChoices):
+        ANALYST = "analyst", "Analyst"
+        TECHNICIAN = "technician", "Technician"
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    position = models.CharField(max_length=155)
+    position = models.CharField(
+        max_length=20,
+        choices=Position.choices,
+        default=Position.ANALYST,
+    )
     phone_number = models.CharField(max_length=50)
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
+
+    @property
+    def is_technician(self):
+        return self.position == self.Position.TECHNICIAN
 
 
 class Ticket(models.Model):

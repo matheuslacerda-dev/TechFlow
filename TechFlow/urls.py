@@ -25,3 +25,5 @@ urlpatterns = [
     path("accounts/", include("django.contrib.auth.urls")),
     path("tickets/", include("tickets.urls")),
 ]
+
+handler403 = "tickets.views.permission_denied_view"

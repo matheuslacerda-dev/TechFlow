@@ -59,7 +59,7 @@ class TicketAccessAndResolutionTests(TestCase):
         )
         cls.owner_employee = Employee.objects.create(
             user=cls.owner_user,
-            position="Analyst",
+            position=Employee.Position.ANALYST,
             phone_number="+1 111 111",
             department=cls.department,
         )
@@ -70,7 +70,7 @@ class TicketAccessAndResolutionTests(TestCase):
         )
         cls.other_employee = Employee.objects.create(
             user=cls.other_user,
-            position="Analyst",
+            position=Employee.Position.ANALYST,
             phone_number="+1 222 222",
             department=cls.department,
         )
@@ -81,7 +81,7 @@ class TicketAccessAndResolutionTests(TestCase):
         )
         cls.tech_employee = Employee.objects.create(
             user=cls.tech_user,
-            position="Technician",
+            position=Employee.Position.TECHNICIAN,
             phone_number="+1 333 333",
             department=cls.department,
         )
@@ -113,7 +113,7 @@ class TicketAccessAndResolutionTests(TestCase):
         self.client.force_login(user_without_employee)
 
         payload = {
-            "position": "Analyst",
+            "position": Employee.Position.ANALYST,
             "phone_number": "+1 444 444",
             "department": self.department.pk,
         }
@@ -130,12 +130,60 @@ class TicketAccessAndResolutionTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "VPN down")
 
-    def test_ticket_detail_is_forbidden_for_non_owner_non_technician(self):
+    def test_ticket_detail_returns_404_for_non_owner_non_technician(self):
         self.client.force_login(self.other_user)
 
         response = self.client.get(reverse("ticket-detail", args=[self.ticket.pk]))
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
+
+    def test_ticket_list_hides_other_users_tickets_for_non_privileged_user(self):
+        self.client.force_login(self.other_user)
+
+        response = self.client.get(reverse("ticket-list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "VPN down")
+
+    def test_ticket_list_shows_all_tickets_for_technician(self):
+        self.client.force_login(self.tech_user)
+
+        response = self.client.get(reverse("ticket-list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "VPN down")
+
+    def test_superuser_can_view_any_ticket_detail(self):
+        admin_user = get_user_model().objects.create_superuser(
+            username="admin",
+            email="admin@company.com",
+            password="AdminPass123!",
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse("ticket-detail", args=[self.ticket.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "VPN down")
+
+    def test_technician_cannot_edit_other_users_ticket(self):
+        self.client.force_login(self.tech_user)
+
+        response = self.client.get(reverse("ticket-update", args=[self.ticket.pk]))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_superuser_can_edit_any_ticket(self):
+        admin_user = get_user_model().objects.create_superuser(
+            username="root",
+            email="root@company.com",
+            password="RootPass123!",
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse("ticket-update", args=[self.ticket.pk]))
+
+        self.assertEqual(response.status_code, 200)
 
     def test_non_technician_cannot_resolve_ticket(self):
         self.client.force_login(self.owner_user)
@@ -172,3 +220,63 @@ class TicketAccessAndResolutionTests(TestCase):
         self.assertEqual(resolution.technician, self.tech_employee)
         self.assertEqual(resolution.comment, "Reset VPN gateway and refreshed policy.")
         self.assertEqual(resolution.spent_time, timedelta(hours=1, minutes=15))
+
+
+class DepartmentAccessTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.department = Department.objects.create(
+            name="Infrastructure",
+            localization="HQ-3F",
+            chief_of_department="Morgan",
+        )
+
+        user_model = get_user_model()
+
+        cls.analyst_user = user_model.objects.create_user(
+            username="analyst",
+            password="AnalystPass123!",
+        )
+        Employee.objects.create(
+            user=cls.analyst_user,
+            position=Employee.Position.ANALYST,
+            phone_number="+1 100 100",
+            department=cls.department,
+        )
+
+        cls.technician_user = user_model.objects.create_user(
+            username="technician",
+            password="TechnicianPass123!",
+        )
+        Employee.objects.create(
+            user=cls.technician_user,
+            position=Employee.Position.TECHNICIAN,
+            phone_number="+1 200 200",
+            department=cls.department,
+        )
+
+    def test_department_create_is_forbidden_for_analyst(self):
+        self.client.force_login(self.analyst_user)
+
+        response = self.client.get(reverse("department-create"))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_department_create_is_allowed_for_technician(self):
+        self.client.force_login(self.technician_user)
+
+        response = self.client.get(reverse("department-create"))
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_department_create_is_allowed_for_superuser(self):
+        superuser = get_user_model().objects.create_superuser(
+            username="dept.admin",
+            email="dept.admin@company.com",
+            password="DeptAdminPass123!",
+        )
+        self.client.force_login(superuser)
+
+        response = self.client.get(reverse("department-create"))
+
+        self.assertEqual(response.status_code, 200)

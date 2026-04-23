@@ -32,7 +32,9 @@
 
     <div class="mt-5 flex flex-wrap gap-2">
         <a href="{% url 'ticket-list' %}" class="lb-btn">[>] Back</a>
-        <a href="{% url 'ticket-update' ticket.pk %}" class="lb-btn">[=] Edit Ticket</a>
+        {% if can_edit_ticket %}
+            <a href="{% url 'ticket-update' ticket.pk %}" class="lb-btn">[=] Edit Ticket</a>
+        {% endif %}
     </div>
 </section>
 

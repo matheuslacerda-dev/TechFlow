@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}403 | Access Denied | TechFlow{% endblock %}
+
+{% block content %}
+<section class="lb-panel mx-auto max-w-3xl p-5 sm:p-6">
+    <p class="lb-system">[error] 403.forbidden</p>
+    <h1 class="mt-2 text-2xl font-semibold sm:text-3xl">Access denied for this action</h1>
+    <p class="lb-copy mt-2 text-sm">Your account does not have the required permission for this resource.</p>
+
+    {% if error_reason %}
+        <div class="lb-error mt-4">
+            <p class="lb-error-code">[tf-authz-403]</p>
+            <p class="lb-error-title">Authorization blocked this request</p>
+            <p class="lb-error-desc">{{ error_reason }}</p>
+        </div>
+    {% endif %}
+
+    <div class="mt-5 flex flex-wrap gap-2">
+        <a href="{% url 'ticket-list' %}" class="lb-btn lb-btn-amber">[>] Back to Tickets</a>
+        <a href="{% url 'my-tickets' %}" class="lb-btn">[>] My Tickets</a>
+        <a href="{% url 'employee-update' %}" class="lb-btn">[=] Profile</a>
+    </div>
+</section>
+{% endblock %}
