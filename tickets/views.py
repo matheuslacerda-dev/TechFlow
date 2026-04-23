@@ -1,6 +1,6 @@
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.db import DatabaseError
 from django.db.models import Q
@@ -34,9 +34,48 @@ def register_view(request):
     return render(request, "registration/register.html", {"form": form})
 
 
+def permission_denied_view(request, exception):
+    return render(
+        request,
+        "403.html",
+        {
+            "error_reason": str(exception) if exception else "Insufficient permissions.",
+        },
+        status=403,
+    )
+
+
+def user_can_view_all_tickets(user):
+    return user.is_authenticated and (
+        user.is_superuser or user.is_staff or user.is_technician
+    )
+
+
+def user_can_edit_ticket(user, ticket):
+    if not user.is_authenticated:
+        return False
+
+    if user.is_superuser or user.is_staff:
+        return True
+
+    return user.has_employee_profile and ticket.who_opened_id == user.employee.id
+
+
+def visible_tickets_queryset(user):
+    queryset = Ticket.objects.select_related("who_opened__user", "who_opened__department")
+
+    if user_can_view_all_tickets(user):
+        return queryset
+
+    if user.has_employee_profile:
+        return queryset.filter(who_opened=user.employee)
+
+    return queryset.none()
+
+
 @login_required
 def ticket_create_view(request):
-    if not hasattr(request.user, "employee"):
+    if not request.user.has_employee_profile:
         return redirect("employee-create")
 
     form = TicketForm(request.POST or None)
@@ -53,7 +92,7 @@ def ticket_create_view(request):
 
 @login_required
 def employee_create_view(request):
-    if hasattr(request.user, "employee"):
+    if request.user.has_employee_profile:
         return redirect("ticket-create")
 
     form = EmployeeForm()
@@ -88,10 +127,7 @@ class TicketListView(LoginRequiredMixin, generic.ListView):
         return [self.template_name]
 
     def get_queryset(self):
-        queryset = (
-            Ticket.objects.select_related("who_opened__user", "who_opened__department")
-            .order_by("-created_at")
-        )
+        queryset = visible_tickets_queryset(self.request.user).order_by("-created_at")
 
         query = self.request.GET.get("q", "").strip()
         status = self.request.GET.get("status", "").strip()
@@ -147,11 +183,14 @@ class MyTicketsListView(LoginRequiredMixin, generic.ListView):
         return [self.template_name]
 
     def get_queryset(self):
-        queryset = (
-            Ticket.objects.select_related("who_opened__user", "who_opened__department")
-            .filter(who_opened__user=self.request.user)
-            .order_by("-created_at")
-        )
+        queryset = Ticket.objects.select_related(
+            "who_opened__user", "who_opened__department"
+        ).order_by("-created_at")
+
+        if self.request.user.has_employee_profile:
+            queryset = queryset.filter(who_opened=self.request.user.employee)
+        else:
+            queryset = queryset.none()
 
         query = self.request.GET.get("q", "").strip()
         status = self.request.GET.get("status", "").strip()
@@ -195,38 +234,22 @@ class TicketDetailView(LoginRequiredMixin, generic.DetailView):
     template_name = "ticket_detail.html"
     context_object_name = "ticket"
 
-    def get_is_technician(self):
-        user = self.request.user
-        return (
-            hasattr(user, "employee")
-            and user.employee.position.lower() == "technician"
-        )
-
-    def get_object(self, queryset=None):
-        ticket = super().get_object(queryset)
-        user = self.request.user
-
-        has_profile = hasattr(user, "employee")
-        is_owner = has_profile and ticket.who_opened.user == user
-        is_tech = self.get_is_technician()
-
-        if is_owner or is_tech:
-            return ticket
-
-        raise PermissionDenied("Access denied.")
+    def get_queryset(self):
+        return visible_tickets_queryset(self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        ticket = self.get_object()
-        is_tech = self.get_is_technician()
+        ticket = self.object
+        is_tech = self.request.user.is_technician
         context["is_technician"] = is_tech
+        context["can_edit_ticket"] = user_can_edit_ticket(self.request.user, ticket)
         context["resolutions"] = ticket.resolutions.select_related("technician__user").all()
         if is_tech and ticket.status != "closed":
             context["resolution_form"] = ResolutionForm()
         return context
 
     def post(self, request, *args, **kwargs):
-        if not self.get_is_technician():
+        if not request.user.is_technician:
             raise PermissionDenied("Only technicians can resolve tickets.")
 
         self.object = self.get_object()
@@ -248,11 +271,15 @@ class TicketDetailView(LoginRequiredMixin, generic.DetailView):
         return self.render_to_response(context)
 
 
-class DepartmentCreateView(LoginRequiredMixin, generic.CreateView):
+class DepartmentCreateView(LoginRequiredMixin, UserPassesTestMixin, generic.CreateView):
     model = Department
     form_class = DepartmentForm
     template_name = "department_create.html"
     success_url = reverse_lazy("ticket-list")
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.can_manage_departments
 
 
 class TicketUpdateView(LoginRequiredMixin, generic.UpdateView):
@@ -261,17 +288,18 @@ class TicketUpdateView(LoginRequiredMixin, generic.UpdateView):
     template_name = "ticket_update.html"
     success_url = reverse_lazy("ticket-list")
 
-    def get_object(self, queryset=None):
-        ticket = super().get_object(queryset)
-        user = self.request.user
+    def get_queryset(self):
+        if self.request.user.is_superuser or self.request.user.is_staff:
+            return Ticket.objects.select_related(
+                "who_opened__user", "who_opened__department"
+            )
 
-        has_profile = hasattr(user, "employee")
-        is_owner = has_profile and ticket.who_opened.user == user
+        if self.request.user.has_employee_profile:
+            return Ticket.objects.select_related(
+                "who_opened__user", "who_opened__department"
+            ).filter(who_opened=self.request.user.employee)
 
-        if is_owner:
-            return ticket
-
-        raise PermissionDenied("Access denied.")
+        return Ticket.objects.none()
 
 
 class EmployeeUpdateView(LoginRequiredMixin, generic.UpdateView):
@@ -283,7 +311,7 @@ class EmployeeUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_object(self, queryset=None):
         user = self.request.user
 
-        if hasattr(user, "employee"):
+        if user.has_employee_profile:
             return user.employee
 
         raise PermissionDenied("Access denied.")

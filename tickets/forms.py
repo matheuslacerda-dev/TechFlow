@@ -41,10 +41,9 @@ class EmployeeForm(forms.ModelForm):
         model = Employee
         fields = ["position", "phone_number", "department"]
         widgets = {
-            "position": forms.TextInput(
+            "position": forms.Select(
                 attrs={
-                    "class": BASE_INPUT_CLASS,
-                    "placeholder": "Analyst or Technician",
+                    "class": BASE_SELECT_CLASS,
                 }
             ),
             "phone_number": forms.TextInput(

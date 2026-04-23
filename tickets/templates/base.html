@@ -236,7 +236,9 @@
                     {% if user.is_authenticated %}
                         <a href="{% url 'ticket-list' %}" class="lb-btn">[>] All Tickets</a>
                         <a href="{% url 'my-tickets' %}" class="lb-btn">[>] My Tickets</a>
-                        <a href="{% url 'department-create' %}" class="lb-btn">[+] Department</a>
+                        {% if user.can_manage_departments %}
+                            <a href="{% url 'department-create' %}" class="lb-btn">[+] Department</a>
+                        {% endif %}
                         <a href="{% url 'employee-update' %}" class="lb-btn">[=] Profile</a>
                         <form method="post" action="{% url 'logout' %}">
                             {% csrf_token %}
@@ -253,7 +255,9 @@
                 {% if user.is_authenticated %}
                     <a href="{% url 'ticket-list' %}" class="lb-btn w-full">[>] All Tickets</a>
                     <a href="{% url 'my-tickets' %}" class="lb-btn w-full">[>] My Tickets</a>
-                    <a href="{% url 'department-create' %}" class="lb-btn w-full">[+] Department</a>
+                    {% if user.can_manage_departments %}
+                        <a href="{% url 'department-create' %}" class="lb-btn w-full">[+] Department</a>
+                    {% endif %}
                     <a href="{% url 'employee-update' %}" class="lb-btn w-full">[=] Profile</a>
                     <form method="post" action="{% url 'logout' %}">
                         {% csrf_token %}

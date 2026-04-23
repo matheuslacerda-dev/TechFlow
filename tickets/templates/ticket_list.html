@@ -9,7 +9,9 @@
     <p class="lb-copy mt-2 max-w-3xl text-sm">{{ list_subtitle }}</p>
     <div class="mt-4 flex flex-wrap gap-2">
         <a href="{% url 'ticket-create' %}" class="lb-btn lb-btn-amber">[x] Create Ticket</a>
-        <a href="{% url 'department-create' %}" class="lb-btn">[+] Department</a>
+        {% if user.can_manage_departments %}
+            <a href="{% url 'department-create' %}" class="lb-btn">[+] Department</a>
+        {% endif %}
         <a href="{% url 'employee-update' %}" class="lb-btn">[=] Profile</a>
     </div>
 </section>
