@@ -45,26 +45,10 @@ def permission_denied_view(request, exception):
     )
 
 
-def user_can_view_all_tickets(user):
-    return user.is_authenticated and (
-        user.is_superuser or user.is_staff or user.is_technician
-    )
-
-
-def user_can_edit_ticket(user, ticket):
-    if not user.is_authenticated:
-        return False
-
-    if user.is_superuser or user.is_staff:
-        return True
-
-    return user.has_employee_profile and ticket.who_opened_id == user.employee.id
-
-
 def visible_tickets_queryset(user):
     queryset = Ticket.objects.select_related("who_opened__user", "who_opened__department")
 
-    if user_can_view_all_tickets(user):
+    if user.can_view_all_tickets:
         return queryset
 
     if user.has_employee_profile:
@@ -95,10 +79,9 @@ def employee_create_view(request):
     if request.user.has_employee_profile:
         return redirect("ticket-create")
 
-    form = EmployeeForm()
+    form = EmployeeForm(request.POST or None)
 
     if request.method == "POST":
-        form = EmployeeForm(request.POST)
         if form.is_valid():
             try:
                 employee = form.save(commit=False)
@@ -242,8 +225,10 @@ class TicketDetailView(LoginRequiredMixin, generic.DetailView):
         ticket = self.object
         is_tech = self.request.user.is_technician
         context["is_technician"] = is_tech
-        context["can_edit_ticket"] = user_can_edit_ticket(self.request.user, ticket)
-        context["resolutions"] = ticket.resolutions.select_related("technician__user").all()
+        context["can_edit_ticket"] = self.request.user.can_edit_ticket(ticket)
+        context["resolutions"] = (
+            ticket.resolutions.select_related("technician__user").all()
+        )
         if is_tech and ticket.status != "closed":
             context["resolution_form"] = ResolutionForm()
         return context
@@ -253,7 +238,7 @@ class TicketDetailView(LoginRequiredMixin, generic.DetailView):
             raise PermissionDenied("Only technicians can resolve tickets.")
 
         self.object = self.get_object()
-        form = ResolutionForm(request.POST)
+        form = ResolutionForm(request.POST or None)
 
         if form.is_valid():
             resolution = form.save(commit=False)

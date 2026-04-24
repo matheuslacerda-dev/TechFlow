@@ -17,6 +17,23 @@ class User(AbstractUser):
     def can_manage_departments(self):
         return self.is_superuser or self.is_staff or self.is_technician
 
+    @property
+    def can_view_all_tickets(self):
+        return self.is_authenticated and (
+            self.is_superuser or self.is_staff or self.is_technician
+        )
+
+    def can_edit_ticket(self, ticket):
+        if not self.is_authenticated:
+            return False
+
+        if self.is_superuser or self.is_staff:
+            return True
+
+        return (
+            self.has_employee_profile and ticket.who_opened_id == self.employee.id
+        )
+
 
 class Department(models.Model):
     name = models.CharField(max_length=155)
